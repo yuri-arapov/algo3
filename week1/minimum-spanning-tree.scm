@@ -50,10 +50,10 @@
 (define (edge-cost e) (caddr e))
 
 (define (count-graph-nodes edges)
-  (let loop ((max-node 0) (edges edges))
-    (if (null? edges) max-node
-        (let ((e (car edges)))
-          (loop (max max-node (edge-from e) (edge-to e)) (cdr edges))))))
+  (fold
+    (lambda (e max-node) (max max-node (edge-from e) (edge-to e)))
+    0
+    edges))
 
 (define (make-graph edges)
   (let ((num-nodes (count-graph-nodes edges)))
@@ -75,15 +75,14 @@
 
 
 (define (find-min-cost-edge g)
-  (let loop ((res #f) (edges (graph-edges g)))
-    (if (null? edges) res
-      (let ((e (car edges)))
-        (loop
-          (if (and (graph-crossing-edge? g e)
-                   (or (not res) (< (edge-cost e) (edge-cost res))))
-            e
-            res)
-          (cdr edges))))))
+  (fold
+    (lambda (e res)
+      (if (and (graph-crossing-edge? g e)
+               (or (not res) (< (edge-cost e) (edge-cost res))))
+          e
+          res))
+    #f
+    (graph-edges g)))
 
 
 ;; Prim's algorithm
