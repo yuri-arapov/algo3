@@ -34,20 +34,8 @@
 ;; their positions in the heap.
 
 
-(define (parse-edge-line line)
-  (map string->number
-       (filter (compose not string-null?)
-               (string-split line #\space))))
+(load "read-edges.scm")
 
-
-(define (read-edges fname)
-  (filter (lambda (el) (= 3 (length el)))
-          (map parse-edge-line (read-file fname))))
-
-
-(define (edge-from e) (car e))
-(define (edge-to e)   (cadr e))
-(define (edge-cost e) (caddr e))
 
 (define (count-graph-nodes edges)
   (fold
