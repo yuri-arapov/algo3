@@ -30,14 +30,7 @@
 ;; discussion forum).
 
 
-(define *debug* #f)
-
-
-(define (debug-print . args)
-  (if *debug* (format #t "~a\n" args)))
-
-
-(define (set-debug x) (set! *debug* x))
+(load "debug-print.scm")
 
 
 (define (job-weight j) (car j))
@@ -104,11 +97,11 @@
 
 
 ;; 69119377652
-(define (task1) (task1-impl (read-jobs "jobs.txt")))
+(define (week1-task1) (task1-impl (read-jobs "jobs.txt")))
 
 
 ;; 67311454237
-(define (task2) (task2-impl (read-jobs "jobs.txt")))
+(define (week1-task2) (task2-impl (read-jobs "jobs.txt")))
 
 
 ;; end of file

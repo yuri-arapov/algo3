@@ -17,4 +17,11 @@
 (define (edge-cost e) (caddr e))
 
 
+(define (count-graph-nodes edges)
+  (fold
+    (lambda (e max-node) (max max-node (edge-from e) (edge-to e)))
+    0
+    edges))
+
+
 ;; end of file

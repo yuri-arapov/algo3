@@ -37,12 +37,6 @@
 (load "read-edges.scm")
 
 
-(define (count-graph-nodes edges)
-  (fold
-    (lambda (e max-node) (max max-node (edge-from e) (edge-to e)))
-    0
-    edges))
-
 (define (make-graph edges)
   (let ((num-nodes (count-graph-nodes edges)))
     (vector
@@ -95,7 +89,7 @@
 
 
 ;; -3612829
-(define (task3)
+(define (week1-task3)
   (minimum-spanning-tree (make-graph (read-edges "edges.txt"))))
 
 
