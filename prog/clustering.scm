@@ -44,21 +44,21 @@
          (fuse (lambda (n1 n2) (uf-union uf n1 n2)))
          (sorted-edges (sort edges (lambda (e1 e2) (< (edge-cost e1) (edge-cost e2))))))
     (debug-print "size" size)
-    (let loop ((num-clusters size) (edges sorted-edges))
+    (let loop ((edges sorted-edges))
       (let* ((e (car edges))
              (n1 (edge-from e))
              (n2 (edge-to e)))
         (if (same-cluster? n1 n2)
             (begin
-              (debug-print "skip" n1 n2 "cost" (edge-cost e) "k" num-clusters)
-              (loop num-clusters (cdr edges)))
+              (debug-print "skip" n1 n2 "cost" (edge-cost e) "k" (uf-domain-count uf))
+              (loop (cdr edges)))
             (begin
-              (if (= num-clusters k)
+              (if (= (uf-domain-count uf) k)
                   (edge-cost e) ;; result found
                   (begin
-                    (debug-print "fuse" n1 n2 "cost" (edge-cost e) "k" num-clusters)
+                    (debug-print "fuse" n1 n2 "cost" (edge-cost e) "k" (uf-domain-count uf))
                     (fuse n1 n2)
-                    (loop (1- num-clusters) (cdr edges))))))))))
+                    (loop (cdr edges))))))))))
 
 ;; 106
 (define (week2-task1)
