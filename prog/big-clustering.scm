@@ -39,6 +39,7 @@
 
 (use-modules (ice-9 receive))
 
+(load "bsearch.scm")
 (load "combinations.scm")
 (load "union-find.scm")
 (load "debug-print.scm")
@@ -106,7 +107,8 @@
 
 (define (big-clustering node-count bits-per-node nodes max-hamming-distance)
   (let* ((flip-bits     (make-flip-bits  bits-per-node max-hamming-distance))
-         (flip-masks    (map bits->mask flip-bits))
+         (good-diffs    (list->vector (sort (map bits->mask flip-bits) <)))
+         (good-diff?    (lambda (n1 n2) (bsearch good-diffs (logxor n1 n2))))
          (uf            (make-uf node-count))
          (numbers       (list->vector (map bits->number nodes)))
          (number        (lambda (idx) (vector-ref numbers idx)))
@@ -116,18 +118,15 @@
       (if (or (null? indices) (null? (cdr indices))) (uf-domain-count uf) ;; result
           (let* ((ihead (car indices))
                  (nhead (number ihead))
-                 (diffs (map (lambda (mask) (logxor nhead mask)) flip-masks))
                  (tail  (cdr indices)))
             ;;(debug-print "head" (s2 nhead) "k" (uf-domain-count uf))
             (for-each
               (lambda (i)
                 ;;(debug-print (s2 nhead) (s2 (number i)))
-                (if (not (connected? ihead i))
-                    (let ((inum (number i)))
-                      (if (find (lambda (diff) (= inum diff)) diffs)
-                          (begin
-                            (debug-print "match" ihead i (uf-domain-count uf) (s2 nhead (number i)))
-                            (connect ihead i))))))
+                (if (good-diff? nhead (number i))
+                    (begin
+                      (debug-print "match" ihead i (uf-domain-count uf) (s2 nhead (number i)))
+                      (connect ihead i))))
               tail)
             (loop tail))))))
 
@@ -135,7 +134,7 @@
 (define (week2-task2-with-file fname)
   (debug-print "reading data from file" fname)
   (receive (node-count bits-per-node nodes) (read-bit-graph fname)
-     (debug-print "starting clustering")
+     (debug-print "clustering")
      (big-clustering node-count bits-per-node nodes 2)))
 
 (define (week2-task2)
