@@ -67,6 +67,11 @@
     (values (car count-size) (cadr count-size) bit-list)))
 
 
+(define (count-bits-set n)
+  (let loop ((res 0) (n n))
+    (if (zero? n) res
+        (loop (if (= 1 (logand n 1)) (+ 1 res) res) (ash n -1)))))
+
 
 ;; turn bit list into number
 (define (bits->number bits)
@@ -105,30 +110,43 @@
         (else (map (lambda (x) (number->string x 2)) n))))
 
 
+;; wn is a 'weighted number' - number with the weight
+;; where weight is amount of bits set to 1
+(define (make-wn n) (cons n (count-bits-set n)))
+(define (wn-n wn) (car wn))
+(define (wn-w wn) (cdr wn))
+
+
 (define (big-clustering node-count bits-per-node nodes max-hamming-distance)
   (let* ((flip-bits     (make-flip-bits  bits-per-node max-hamming-distance))
          (good-diffs    (list->vector (sort (map bits->mask flip-bits) <)))
-         (good-diff?    (lambda (n1 n2) (bsearch good-diffs (logxor n1 n2))))
+         (good-diff?    (lambda (x y) (bsearch good-diffs (logxor x y))))
          (uf            (make-uf node-count))
-         (numbers       (list->vector (map bits->number nodes)))
-         (number        (lambda (idx) (vector-ref numbers idx)))
-         (connected?    (lambda (n1 n2) (= (uf-find uf n1) (uf-find uf n2))))
-         (connect       (lambda (n1 n2) (uf-union uf n1 n2))))
-    (let loop ((indices (iota node-count)))
-      (if (or (null? indices) (null? (cdr indices))) (uf-domain-count uf) ;; result
-          (let* ((ihead (car indices))
-                 (nhead (number ihead))
-                 (tail  (cdr indices)))
-            ;;(debug-print "head" (s2 nhead) "k" (uf-domain-count uf))
-            (for-each
-              (lambda (i)
-                ;;(debug-print (s2 nhead) (s2 (number i)))
-                (if (good-diff? nhead (number i))
-                    (begin
-                      (debug-print "match" ihead i (uf-domain-count uf) (s2 nhead (number i)))
-                      (connect ihead i))))
-              tail)
-            (loop tail))))))
+         (wnumbers      (list->vector ;; sorted by weight
+                          (sort
+                            (map (lambda (bits) (make-wn (bits->number bits)))
+                                 nodes)
+                            (lambda (x y) (< (wn-w x) (wn-w y))))))
+         (wn            (lambda (idx) (vector-ref wnumbers idx)))
+         (number        (lambda (idx) (wn-n (wn idx))))
+         (weight        (lambda (idx) (wn-w (wn idx))))
+         (connected?    (lambda (i j) (= (uf-find uf i) (uf-find uf j))))
+         (connect       (lambda (i j) (uf-union uf i j))))
+    (let loop ((i 0))
+      (if (< (- node-count i) 2) (uf-domain-count uf) ;; result
+          (let ((ni (number i))
+                (wi (weight i)))
+            (let probe ((j (+ i 1)))
+              (if (and (< j node-count)
+                       (<= (abs (- wi (weight j))) max-hamming-distance))
+                (begin
+                  (if (and (not (connected? i j))
+                           (good-diff? ni (number j)))
+                      (begin
+                        (connect i j)
+                        (debug-print "match" i j (uf-domain-count uf) (s2 ni (number j)))))
+                  (probe (+ j 1)))))
+            (loop (+ i 1)))))))
 
 
 (define (week2-task2-with-file fname)
@@ -137,6 +155,8 @@
      (debug-print "clustering")
      (big-clustering node-count bits-per-node nodes 2)))
 
+
+;; 6148
 (define (week2-task2)
   (week2-task2-with-file "clustering_big.txt"))
 
