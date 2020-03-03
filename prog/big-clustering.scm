@@ -120,7 +120,8 @@
 (define (big-clustering node-count bits-per-node nodes max-hamming-distance)
   (let* ((flip-bits     (make-flip-bits  bits-per-node max-hamming-distance))
          (good-diffs    (list->vector (sort (map bits->mask flip-bits) <)))
-         (good-diff?    (lambda (x y) (bsearch good-diffs (logxor x y))))
+         ;;(good-diff?    (lambda (x y) (bsearch good-diffs (logxor x y))))
+         (good-diff?    (lambda (x y) (<= (count-bits-set (logxor x y)) 2)))
          (uf            (make-uf node-count))
          (wnumbers      (list->vector ;; sorted by weight
                           (sort
@@ -131,7 +132,8 @@
          (number        (lambda (idx) (wn-n (wn idx))))
          (weight        (lambda (idx) (wn-w (wn idx))))
          (connected?    (lambda (i j) (= (uf-find uf i) (uf-find uf j))))
-         (connect       (lambda (i j) (uf-union uf i j))))
+         (connect       (lambda (i j) (uf-union uf i j)))
+         (test-count    0))
     (let loop ((i 0))
       (if (< (- node-count i) 2) (uf-domain-count uf) ;; result
           (let ((ni (number i))
@@ -143,10 +145,12 @@
                   (if (and (not (connected? i j))
                            (good-diff? ni (number j)))
                       (begin
+                        ;;;(set! test-count (+ test-count 1))
                         (connect i j)
                         (debug-print "match" i j (uf-domain-count uf) (s2 ni (number j)))))
                   (probe (+ j 1)))))
-            (loop (+ i 1)))))))
+            (if (< test-count 1000)
+                (loop (+ i 1))))))))
 
 
 (define (week2-task2-with-file fname)
@@ -156,7 +160,7 @@
      (big-clustering node-count bits-per-node nodes 2)))
 
 
-;; 6148
+;; 6118 (time: 46302.86 sec)
 (define (week2-task2)
   (week2-task2-with-file "clustering_big.txt"))
 
