@@ -161,6 +161,7 @@
 
 
 ;; 6118 (time: 46302.86 sec)
+;; 6118 (time: 42402.88 sec)
 (define (week2-task2)
   (week2-task2-with-file "clustering_big.txt"))
 

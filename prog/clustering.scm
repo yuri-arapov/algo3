@@ -60,7 +60,7 @@
                     (fuse n1 n2)
                     (loop (cdr edges))))))))))
 
-;; 106
+;; 106 (time: 2.84 sec)
 (define (week2-task1)
   (max-spacing-clustering 4 (read-edges "clustering1.txt")))
 
