@@ -42,7 +42,26 @@
 (load "bsearch.scm")
 (load "combinations.scm")
 (load "union-find.scm")
+(load "lazy-union-find.scm")
 (load "debug-print.scm")
+
+
+(define *lazy-union-find* #f)
+
+
+(define make-uf         make-uf)
+(define uf-find         uf-find)
+(define uf-union        uf-union)
+(define uf-domain-count uf-domain-count)
+
+
+(if *lazy-union-find*
+    (begin
+      (format #t "\nlazy uinon-find\n")
+      (set! make-uf         make-luf)
+      (set! uf-find         luf-find)
+      (set! uf-union        luf-union)
+      (set! uf-domain-count luf-domain-count)))
 
 
 (define *zero* (char->integer #\0))
@@ -123,6 +142,7 @@
          ;;(good-diff?    (lambda (x y) (bsearch good-diffs (logxor x y))))
          (good-diff?    (lambda (x y) (<= (count-bits-set (logxor x y)) 2)))
          (uf            (make-uf node-count))
+         (find          (lambda (n) (uf-find uf n)))
          (wnumbers      (list->vector ;; sorted by weight
                           (sort
                             (map (lambda (bits) (make-wn (bits->number bits)))
@@ -131,22 +151,25 @@
          (wn            (lambda (idx) (vector-ref wnumbers idx)))
          (number        (lambda (idx) (wn-n (wn idx))))
          (weight        (lambda (idx) (wn-w (wn idx))))
-         (connected?    (lambda (i j) (= (uf-find uf i) (uf-find uf j))))
+         ;;(connected?    (lambda (i j) (= (find i) (find j))))
          (connect       (lambda (i j) (uf-union uf i j)))
          (test-count    0))
     (let loop ((i 0))
       (if (< (- node-count i) 2) (uf-domain-count uf) ;; result
           (let ((ni (number i))
-                (wi (weight i)))
+                (wi (weight i))
+                (di (find i)))
             (let probe ((j (+ i 1)))
               (if (and (< j node-count)
                        (<= (abs (- wi (weight j))) max-hamming-distance))
                 (begin
-                  (if (and (not (connected? i j))
-                           (good-diff? ni (number j)))
+                  (if (and
+                        (not (= di (find j))) ;; not connected
+                        (good-diff? ni (number j))) ;; distance is good
                       (begin
                         ;;;(set! test-count (+ test-count 1))
                         (connect i j)
+                        (set! di (find i)) ;; update di after merge
                         (debug-print "match" i j (uf-domain-count uf) (s2 ni (number j)))))
                   (probe (+ j 1)))))
             (if (< test-count 1000)
