@@ -58,14 +58,12 @@
          (w  (lambda (i) (2nd (vector-ref vw i))))
          (W  size)
 
-         (vv (make-hash-table))
-         (value  (lambda (i j) (hash-table-ref/default vv (cons i j) #f)))
-         (value! (lambda (i j x) (hash-table-set! vv (cons i j) x)))
+         (vv         (make-hash-table))
+         (value      (lambda (i j) (hash-table-ref/default vv (cons i j) #f)))
+         (value-set! (lambda (i j x) (hash-table-set! vv (cons i j) x)))
 
          (max-depth 0)
-         (depth 0)
-
-         (mm (make-hash-table)))
+         (depth     0))
 
     (letrec (
      (m (lambda (i j)
@@ -76,15 +74,16 @@
               (format #t "max depth ~a\n" max-depth)))
           (if (or (zero? i) (negative? j))
             0
-            (begin
-              (if (not (value (1- i) j))
-                (value! (1- i) j (m (1- i) j)))
+            (let ((i-1 (- i 1))       ;; just an eye candy
+                  (j-wi (- j (w i)))) ;; (same here)
+              (if (not (value i-1 j))
+                (value-set! i-1 j (m i-1 j)))
               (if (> (w i) j)
-                (value! i j (value (1- i) j))
+                (value-set! i j (value i-1 j))
                 (begin
-                  (if (not (value (1- i) (- j (w i))))
-                    (value! (1- i) (- j (w i)) (m (1- i) (- j (w i)))))
-                  (value! i j (max (value (1- i) j) (+ (value (1- i) (- j (w i))) (v i))))))
+                  (if (not (value i-1 j-wi))
+                    (value-set! i-1 j-wi (m i-1 j-wi)))
+                  (value-set! i j (max (value i-1 j) (+ (value i-1 j-wi) (v i))))))
               (set! depth (1- depth))
               (value i j))))))
       (let ((res (m n W)))
