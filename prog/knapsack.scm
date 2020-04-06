@@ -34,32 +34,47 @@
   (4 2)     ;; ...
   (4 3)))   ;; (value size) of the last item
 
-(define (make-matrix rows columns init-value)
-  (let ((m (make-vector (* rows columns) init-value)))
-    (vector rows columns m)))
+(define (make-matrix columns rows init-value)
+  (let ((m (make-vector (* columns rows) init-value)))
+    (vector columns rows m)))
 
-(define (matrix-ref m r c)
-  (let ((rows (vector-ref m 0))
-        (cols (vector-ref m 1))
+(define (matrix-ref m c r)
+  (let ((cols (vector-ref m 0))
+        (rows (vector-ref m 1))
         (data (vector-ref m 2)))
-    (vector-ref data (+ (* rows r) c))))
+    (vector-ref data (+ (* cols r) c))))
 
-(define (matrix-set! m r c value)
-  (let ((rows (vector-ref m 0))
-        (cols (vector-ref m 1))
+(define (matrix-set! m c r value)
+  (let ((cols (vector-ref m 0))
+        (rows (vector-ref m 1))
         (data (vector-ref m 2)))
-    (vector-set! data (+ (* rows r) c) value)))
+    (vector-set! data (+ (* cols r) c) value)))
 
 
-(define (knapsak-packing size items)
+(define (knapsack-packing size items)
   (let* ((n  (length items))
          (vw (list->vector (cons #f items)))
          (vi (lambda (i) (car (vector-ref vw i))))
          (wi (lambda (i) (cadr (vector-ref vw i))))
          (w  size)
          (aa (make-matrix (1+ n) (1+ w) #f))
-         (a  (lambda (i x)   (matrix-ref aa i x)))
-         (a! (lambda (i x v) (matrix-set! aa i x v))))
+         (cc 0)
+         (zz 0)
+;;         (a  (lambda (i x)   (matrix-ref aa i x)))
+;;         (a! (lambda (i x v) (matrix-set! aa i x v)
+;;               (if (not (zero? v))
+;;                 (set! cc (1+ cc))
+;;                 (set! zz (1+ zz)))))
+
+         (a  (lambda (i x) (let ((v (matrix-ref aa i x)))
+                             (if v v 0))))
+         (a! (lambda (i x v) (if (not (zero? v))
+                               (begin 
+                                 (matrix-set! aa i x v) 
+                                 (set! cc (1+ cc)))
+                               (begin 
+                                 (set! zz (1+ zz))))))
+         )
     (dotimes (x 0 w)
       (a! 0 x 0))
     (dotimes (i 1 n)
@@ -71,15 +86,19 @@
               (if (< x wi)
                 (a i-1 x)
                 (max (a i-1 x) (+ (a i-1 (- x wi)) vi)))))))
+    (format #t "cc ~a zz ~a (~a)\n" cc zz (+ cc zz))
     (a n w)))
 
 
-;; time: 1.74 sec
-;; 2370623
+(define (test)
+  (knapsack-packing (car test-data) (cdr test-data)))
+
+;; time: 1.86 sec
+;; 2493893
 (define (task1)
-  (knapsak-packing
-    (car knapsak1-data)
-    (cdr knapsak1-data)))
+  (knapsack-packing
+    (car knapsack1-data)
+    (cdr knapsack1-data)))
 
 
 ;; end of file

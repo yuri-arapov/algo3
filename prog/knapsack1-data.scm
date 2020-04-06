@@ -1,6 +1,6 @@
 ;; knapsack data
 
-(define knapsak1-data '(
+(define knapsack1-data '(
   10000             ;; size of the knapsak
   (16808 250)       ;; (value size) of the 1-st item
   (50074 659)       ;; ...
